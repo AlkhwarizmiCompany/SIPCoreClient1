@@ -5,6 +5,8 @@ VisualStudioVersion = 17.8.34316.72
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SIPClient1", "SIPClient1\SIPClient1.csproj", "{7C43B913-AC88-424B-8B08-2BC627935974}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SIPSorceryMedia.Windows", "..\SIPSorceryMedia.Windows-master\src\SIPSorceryMedia.Windows.csproj", "{BA94CD5C-0FBF-4A46-B379-C353EAE2DFBD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{7C43B913-AC88-424B-8B08-2BC627935974}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C43B913-AC88-424B-8B08-2BC627935974}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C43B913-AC88-424B-8B08-2BC627935974}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA94CD5C-0FBF-4A46-B379-C353EAE2DFBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA94CD5C-0FBF-4A46-B379-C353EAE2DFBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA94CD5C-0FBF-4A46-B379-C353EAE2DFBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA94CD5C-0FBF-4A46-B379-C353EAE2DFBD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
