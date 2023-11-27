@@ -60,6 +60,11 @@ namespace SIPClient1
         {
             _sipTransport = new SIPTransport();
             _ua = new SIPUserAgent(_sipTransport, null);
+            
+            UserNameTextBox.Text = "Magdy";
+            PasswordBox.Password = "Soft_123";
+            SipServerIpTextBox.Text = "localhost";
+            SipServerPortTextBox.Text = "5060";
         }
         private void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
