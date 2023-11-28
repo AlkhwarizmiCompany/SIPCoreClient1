@@ -45,10 +45,11 @@ namespace SIPClient1
         private static ConcurrentDictionary<string, SIPUserAgent> _calls = new ConcurrentDictionary<string, SIPUserAgent>();
         private static ConcurrentDictionary<string, SIPRegistrationUserAgent> _registrations = new ConcurrentDictionary<string, SIPRegistrationUserAgent>();
         //public static MainWindow Instance { get; private set; }
-        private static readonly string DEFAULT_DESTINATION_SIP_URI = "sip:helloworld@127.0.0.1:5060;transport=tcp";
+        private static readonly string DEFAULT_DESTINATION_SIP_URI = "sip:127.0.0.1:5060";
         private static Microsoft.Extensions.Logging.ILogger Log = NullLogger.Instance;
 
         private SIPUserAgent _ua; // Class-level variable to manage the call.
+        private SIPClientUserAgent uac; // Class-level variable to manage the call.
         public MainWindow()
         {
             InitializeComponent();
@@ -93,38 +94,17 @@ namespace SIPClient1
         }
         private void StartCall()
         {
-            Console.WriteLine("SIPSorcery client user agent example.");
-            Console.WriteLine("Press ctrl-c to exit.");
-
             // Plumbing code to facilitate a graceful exit.
             ManualResetEvent exitMre = new ManualResetEvent(false);
             bool preferIPv6 = false;
             bool isCallHungup = false;
             bool hasCallFailed = false;
 
-            Log = AddConsoleLogger(LogEventLevel.Verbose);
 
             SIPURI callUri = SIPURI.ParseSIPURI(DEFAULT_DESTINATION_SIP_URI);
-            //if (args?.Length > 0)
-            //{
-            //    if (!SIPURI.TryParse(args[0], out callUri))
-            //    {
-            //        AppendToLog($"Command line argument could not be parsed as a SIP URI {args[0]}");
-            //    }
-            //}
-            //if (args?.Length > 1 && args[1] == "ipv6")
-            //{
-            //    preferIPv6 = true;
-            //}
 
-            if (preferIPv6)
-            {
-                AppendToLog($"Call destination {callUri}, preferencing IPv6.");
-            }
-            else
-            {
-                AppendToLog($"Call destination {callUri}.");
-            }
+            AppendToLog($"Call destination {callUri}.");
+            
 
             // Set up a default SIP transport.
             var sipTransport = new SIPTransport();
@@ -139,7 +119,7 @@ namespace SIPClient1
             var offerSDP = rtpSession.CreateOffer(preferIPv6 ? IPAddress.IPv6Any : IPAddress.Any);
 
             // Create a client user agent to place a call to a remote SIP server along with event handlers for the different stages of the call.
-            var uac = new SIPClientUserAgent(sipTransport);
+            uac = new SIPClientUserAgent(sipTransport);
             uac.CallTrying += (uac, resp) => AppendToLog($"{uac.CallDescriptor.To} Trying: {resp.StatusCode} {resp.ReasonPhrase}.");
             uac.CallRinging += async (uac, resp) =>
             {
@@ -282,9 +262,9 @@ namespace SIPClient1
         private void EndCall()
         {
             // Logic to end a call.
-            if (_calls.TryRemove(_ua.Dialogue.CallId, out var ua))
+            if (uac != null)
             {
-                ua.Hangup();
+                uac.Hangup();
                 AppendToLog("Call ended successfully.");
             }
             else
