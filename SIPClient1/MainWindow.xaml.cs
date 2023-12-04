@@ -31,6 +31,8 @@ using System.Threading;
 using Microsoft.Extensions.Logging.Abstractions;
 using Serilog.Configuration;
 using Serilog.Sinks;
+using NAudio.Wave;
+using System.IO;
 
 namespace SIPClient1
 {
@@ -50,18 +52,29 @@ namespace SIPClient1
 
         private SIPUserAgent _ua; // Class-level variable to manage the call.
         private SIPClientUserAgent uac; // Class-level variable to manage the call.
+
+        private BufferedWaveProvider _bufferedWaveProvider;
+
+        private static readonly WaveFormat _waveFormat = new WaveFormat(8000, 16, 1);
+        private static WaveFileWriter _waveFile;
+        private static VoIPMediaSession rtpSession;
         public MainWindow()
         {
             InitializeComponent();
             InitializeSIPComponents();
-           
-            //Instance = this;
+
+            _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(8000, 16, 1)); // Adjust the format as needed
+            _bufferedWaveProvider.BufferDuration = TimeSpan.FromSeconds(20);
+
+            _waveFile = new WaveFileWriter("G:\\src\\SIP\\SIPClient1\\SIPClient1\\output.mp3", _waveFormat);
+
         }
         private void InitializeSIPComponents()
         {
-            _sipTransport = new SIPTransport();
-            _ua = new SIPUserAgent(_sipTransport, null);
-            
+            //_sipTransport = new SIPTransport();
+            //_ua = new SIPUserAgent(_sipTransport, null);
+            //_ua.OnCallHungup += (dialog) => _waveFile?.Close();
+
             UserNameTextBox.Text = "Magdy";
             PasswordBox.Password = "Soft_123";
             SipServerIpTextBox.Text = "localhost";
@@ -92,6 +105,80 @@ namespace SIPClient1
             //var transferUri = SIPURI.ParseSIPURI("sip:" + TransferDestinationTextBox.Text);
             // Transfer call using _sipUserAgent...
         }
+
+        private void PlayByteArray()
+        {
+            using (WaveOutEvent waveOut = new WaveOutEvent())
+            {
+                waveOut.Init(_bufferedWaveProvider);
+                waveOut.Play();
+
+                while (waveOut.PlaybackState == PlaybackState.Playing || _bufferedWaveProvider.BufferedDuration > TimeSpan.Zero)
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
+            }
+        }
+
+
+
+
+        private static void OnRtpPacketReceived1(IPEndPoint remoteEndPoint, SDPMediaTypesEnum mediaType, RTPPacket rtpPacket)
+        {
+            if (mediaType == SDPMediaTypesEnum.audio)
+            {
+                var sample = rtpPacket.Payload;
+
+                for (int index = 0; index < sample.Length; index++)
+                {
+                    if (rtpPacket.Header.PayloadType == (int)SDPWellKnownMediaFormatsEnum.PCMA)
+                    {
+                        short pcm = NAudio.Codecs.ALawDecoder.ALawToLinearSample(sample[index]);
+                        byte[] pcmSample = new byte[] { (byte)(pcm & 0xFF), (byte)(pcm >> 8) };
+                        _waveFile.Write(pcmSample, 0, 2);
+                    }
+                    else
+                    {
+                        short pcm = NAudio.Codecs.MuLawDecoder.MuLawToLinearSample(sample[index]);
+                        byte[] pcmSample = new byte[] { (byte)(pcm & 0xFF), (byte)(pcm >> 8) };
+                        _waveFile.Write(pcmSample, 0, 2);
+                    }
+                }
+            }
+        }
+        private void OnRtpPacketReceived(IPEndPoint remoteEndPoint, SDPMediaTypesEnum mediaType, RTPPacket rtpPacket)
+        {
+            if (mediaType == SDPMediaTypesEnum.audio)
+            {
+                var sample = rtpPacket.Payload;
+
+                byte[] pcmSample = new byte[sample.Length * 2]; // PCM is 2 bytes per sample
+                int pcmIndex = 0;
+
+                for (int index = 0; index < sample.Length; index++)
+                {
+                    short pcm;
+                    if (rtpPacket.Header.PayloadType == (int)SDPWellKnownMediaFormatsEnum.PCMA)
+                    {
+                        pcm = NAudio.Codecs.ALawDecoder.ALawToLinearSample(sample[index]);
+                    }
+                    else
+                    {
+                        pcm = NAudio.Codecs.MuLawDecoder.MuLawToLinearSample(sample[index]);
+                    }
+
+                    // Convert the short to bytes and store it in the pcmSample array
+                    pcmSample[pcmIndex++] = (byte)(pcm & 0xFF);
+                    pcmSample[pcmIndex++] = (byte)(pcm >> 8);
+                }
+
+                // Add the pcmSample to the BufferedWaveProvider
+                _bufferedWaveProvider.AddSamples(pcmSample, 0, pcmSample.Length);
+            }
+        }
+
+
+
         private void StartCall()
         {
             // Plumbing code to facilitate a graceful exit.
@@ -112,10 +199,16 @@ namespace SIPClient1
             sipTransport.EnableTraceLogs();
 
             var audioSession = new WindowsAudioEndPoint(new AudioEncoder());
-            audioSession.RestrictFormats(x => x.Codec == AudioCodecsEnum.PCMA || x.Codec == AudioCodecsEnum.PCMU);
-            //audioSession.RestrictFormats(x => x.Codec == AudioCodecsEnum.G722);
-            var rtpSession = new VoIPMediaSession(audioSession.ToMediaEndPoints());
 
+            List<AudioCodecsEnum> codecs = new List<AudioCodecsEnum> { AudioCodecsEnum.PCMU, AudioCodecsEnum.PCMA, AudioCodecsEnum.G722, AudioCodecsEnum.L16 };
+            //audioSession.RestrictFormats(formats => codecs.Contains(formats.Codec));
+
+            //audioSession.RestrictFormats(x => x.Codec == AudioCodecsEnum.PCMA || x.Codec == AudioCodecsEnum.PCMU);
+            //audioSession.RestrictFormats(x => x.Codec == AudioCodecsEnum.G722);
+            audioSession.RestrictFormats(x => x.Codec == AudioCodecsEnum.PCMA);
+            rtpSession = new VoIPMediaSession(audioSession.ToMediaEndPoints());
+
+            rtpSession.OnRtpPacketReceived += OnRtpPacketReceived;
             var offerSDP = rtpSession.CreateOffer(preferIPv6 ? IPAddress.IPv6Any : IPAddress.Any);
 
             // Create a client user agent to place a call to a remote SIP server along with event handlers for the different stages of the call.
@@ -153,7 +246,9 @@ namespace SIPClient1
                         var result = rtpSession.SetRemoteDescription(SdpType.answer, SDP.ParseSDPDescription(resp.Body));
                         if (result == SetDescriptionResultEnum.OK)
                         {
+                            Task.Run(() => PlayByteArray());
                             await rtpSession.Start();
+
                         }
                         else
                         {
@@ -189,6 +284,7 @@ namespace SIPClient1
                     }
                 }
             };
+            var c = offerSDP.ToString();
 
             // Start the thread that places the call.
             SIPCallDescriptor callDescriptor = new SIPCallDescriptor(
@@ -264,7 +360,10 @@ namespace SIPClient1
             // Logic to end a call.
             if (uac != null)
             {
+                rtpSession.Close(null);
+
                 uac.Hangup();
+                _waveFile?.Close();
                 AppendToLog("Call ended successfully.");
             }
             else
