@@ -16,7 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\SIPSorceryMedia.Windows-master\src\SIPSorceryMedia.Windows.csproj" />
+    <ProjectReference Include="..\..\SIPSorceryMedia.Windows\src\SIPSorceryMedia.Windows.csproj" />
   </ItemGroup>
+
+
 
 </Project>
