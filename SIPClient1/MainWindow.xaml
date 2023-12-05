@@ -15,21 +15,19 @@
             <Button Content="Register" Name="RegisterButton" Click="RegisterButton_Click" Margin="10"/>
             <Button Content="Start Call" Name="StartCallButton" Click="StartCallButton_Click" Margin="10"/>
             <Button Content="End Call" Name="EndCallButton" Click="EndCallButton_Click" Margin="10"/>
-            <Button Content="Transfer Call" Name="TransferCallButton" Click="TransferCallButton_Click" Margin="10"/>
         </StackPanel>
         <StackPanel Grid.Column="1" VerticalAlignment="Top">
             <Label Content="SIP Server IP"  IsHitTestVisible="False" Foreground="Gray"/>
-            <TextBox Name="SipServerIpTextBox" Margin="1"/>
+            <TextBox Name="SipServerIpTextBox" Margin="1" Text="127.0.0.1"/>
             <Label Content="SIP Server Port" IsHitTestVisible="False" Foreground="Gray"/>
-            <TextBox Name="SipServerPortTextBox" Margin="1"/>
+            <TextBox Name="SipServerPortTextBox" Margin="1" Text="5060"/>
             <Label Content="Client Id"  IsHitTestVisible="False" Foreground="Gray"/>
-            <TextBox Name="ClientIdTextBox" Margin="1"/>
+            <TextBox Name="ClientIdTextBox" Margin="1" Text="sipsorcery.cloud"/>
             <Label Content="UserName" IsHitTestVisible="False" Foreground="Gray"/>
-            <TextBox Name="UserNameTextBox" Margin="1"/>
+            <TextBox Name="UserNameTextBox" Margin="1" Text="zahraa"/>
             <Label Content="Password" IsHitTestVisible="False" Foreground="Gray"/>
-            <PasswordBox Name="PasswordBox" Margin="1"/>
-            <Button Content="Update" Name="UpdateButton" Click="UpdateButton_Click" Margin="1"/>
+            <PasswordBox Name="PasswordBox" Margin="1" />
         </StackPanel>
-        <TextBox Name="EventsInfoTextBox" Grid.ColumnSpan="2" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"  Height="141" VerticalAlignment="Bottom"/>
+            <TextBox Name="EventsInfoTextBox" Grid.ColumnSpan="2" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"  Height="141" VerticalAlignment="Bottom"/>
     </Grid>
 </Window>

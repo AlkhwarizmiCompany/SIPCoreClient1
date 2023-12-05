@@ -95,6 +95,7 @@ namespace SIPClient1
             regUserAgent.RegistrationSuccessful += (uri, msg) => AppendToLog($"{uri}: Registration successful.");
             // Start the registration process.
             regUserAgent.Start();
+
         }
         private void UpdateButton_Click(object sender, RoutedEventArgs e)
         {
@@ -339,18 +340,7 @@ namespace SIPClient1
                 sipTransport.Shutdown();
             }
         }
-        private static Microsoft.Extensions.Logging.ILogger AddConsoleLogger(
-          LogEventLevel logLevel = LogEventLevel.Debug)
-        {
-            var serilogLogger = new LoggerConfiguration()
-                .Enrich.FromLogContext()
-                .MinimumLevel.Is(logLevel)
-                .WriteTo.Console()
-                .CreateLogger();
-            var factory = new SerilogLoggerFactory(serilogLogger);
-            SIPSorcery.LogFactory.Set(factory);
-            return factory.CreateLogger<MainWindow>();
-        }
+
         private void StartCallButton_Click(object sender, RoutedEventArgs e)
         {
             Task.Run(StartCall);
